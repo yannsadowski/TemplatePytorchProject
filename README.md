@@ -2,12 +2,14 @@
 
 This template is made for using the Pytorch framework with hydra for the configuration file and wandb for the logging information.
 
+This template is based on the project: [TimeSerieClassifierOnMusic](https://github.com/yannsadowski/TimeSerieClassifierOnMusic).
+
 ## Project Structure
 
 The main directories and files in the project are structured as follows:
 
 ```
-TimeSerieClassifier
+TemplatePytorchProject
 │
 ├── conf
 │   ├── data
