@@ -1,14 +1,15 @@
 import os
 import yaml
 import hydra
-from omegaconf import DictConfig, OmegaConf
+from omegaconf import DictConfig
 import torch
-from src.models.Model import BaseModel
+import pandas as pd
+from src.models.BaseModel import BaseModel
 from src.data.data import transform_data
 from src.predict.predict import predict
-from sklearn.metrics import accuracy_score
-from collections import defaultdict
-from tqdm import tqdm  
+from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
+import joblib 
+from tqdm import tqdm
 
 @hydra.main(config_path="conf/", config_name="default", version_base="1.1")
 def predict_main(dict_config: DictConfig):
@@ -17,7 +18,6 @@ def predict_main(dict_config: DictConfig):
     dataset_config = dict_config.data
     model_config = dict_config.models
     predict_config = dict_config.predict
-    
     
     # Determine the device (GPU or CPU)
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -28,40 +28,91 @@ def predict_main(dict_config: DictConfig):
 
     # Initialize the model with the configurations
     model = BaseModel(
-    ).to(device)
+        input_size=predict_config.input_size,
+        output_size=predict_config.output_size,
+        num_layers_dense=model_config.num_layers_dense,
+        hidden_size_multiplier=model_config.hidden_size_multiplier,
+        dropout=model_config.dropout,
+        norm_type=model_config.norm_type
+    )
     
     # Load the model
-    model_path = model_config.model_path
-    model.load_state_dict(torch.load(model_path))
-    model.eval()
+    model.load_state_dict(torch.load(get_path(predict_config.model_path)))
+    model.to(device)  # Send model to GPU if available
     
-    # Store predictions 
+    # Load classes mapping
+    class_mapping = load_class_mapping(get_path(predict_config.class_mapping_path))
+    
+    # Initialize the list for storing predictions 
     all_predictions = []
 
+    # Load the Iris dataset from CSV file
+    df = pd.read_csv(get_path(dataset_config['path']))
+    
+    all_data = df.iloc[:, :-1].values  # All columns except the last one (features)
+    y = df.iloc[:, -1].values   # Last column (target labels)
 
-    # Get the list of data
-    all_data = []
-
-
-    # Iterate over each file with a progress bar
-    for data_path in tqdm(all_data, desc="Processing data", unit="Sample"):
-      
-        # Transform data
-        data = transform_data(data_path)
-
+    # Load the pre-trained transformer
+    loaded_transformer = joblib.load(get_path(predict_config.transformer_path))
+    
+    # Iterate over each sample with a progress bar
+    for data_path in tqdm(all_data, desc="Processing data", unit="sample"):
+    
+        # Transform data using the pre-trained transformer
+        data = transform_data(data_path, loaded_transformer)
+        
+        # Perform the prediction using the model
         prediction = predict(model, data)
         
-        final_prediction = torch.tensor(prediction, device=device)
+        # Get the predicted class using torch.argmax
+        final_prediction = torch.argmax(torch.tensor(prediction, device=device), dim=-1)
         
+        # Ensure final_prediction is a 1D tensor before adding it
+        final_prediction = final_prediction.unsqueeze(0)  # Add dimension if necessary
         
-        # Store the prediction and the true label
+        # Store the prediction
         all_predictions.append(final_prediction)
-
     
-    # Calculate  accuracy
-
+    # Concatenate predictions and convert to numpy array
+    if all_predictions:  # Check if the list is not empty
+        all_predictions = torch.cat(all_predictions).cpu().numpy()
+    else:
+        print("No predictions were made.")
+        return
     
-    # Calculate overall accuracy
+    # Use class_mapping to get actual class labels
+    y_true = [label for label in y]
+    y_pred = [class_mapping[int(pred)] for pred in all_predictions]
+
+    # Calculate accuracy
+    accuracy = accuracy_score(y_true, y_pred)
+    
+    # Generate classification report
+    report = classification_report(y_true, y_pred, target_names=class_mapping.values())
+    
+    # Generate confusion matrix
+    conf_matrix = confusion_matrix(y_true, y_pred)
+
+    # Print results
+    print("Accuracy: ", accuracy)
+    print("Classification Report: \n", report)
+    print("Confusion Matrix: \n", conf_matrix)
+
+
+# Function to load class mapping from a YAML file
+def load_class_mapping(file_path):
+    with open(file_path, 'r') as file:
+        # Load the YAML file into a dictionary
+        class_mapping = yaml.safe_load(file)
+    return class_mapping['classes']
+
+# Function to get the correct file path
+def get_path(path):
+    # Get the current directory where the script is located
+    current_directory = os.path.dirname(os.path.abspath(__file__))
+
+    # Build the full path using the relative path
+    return os.path.join(current_directory, path)
 
 
 if __name__ == "__main__":

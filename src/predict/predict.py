@@ -2,7 +2,7 @@ import torch
 import torch.nn.functional as F
 
 # inference classifications
-def predict(model, sequence):
+def predict(model,data):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model.to(device)
     model.eval()
