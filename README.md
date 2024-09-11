@@ -86,14 +86,6 @@ TemplatePytorchProject
 
     ```
 
-### Start Virtual Environment
-
-Activate the virtual environment whenever you start working on the project:
-
-```sh
-./dev_env/Scripts/Activate
-```
-
 ### Update Requirements
 
 If you install new packages, update the `requirements.txt` file:
