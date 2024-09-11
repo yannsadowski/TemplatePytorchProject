@@ -58,15 +58,18 @@ TemplatePytorchProject
 
     ```sh
     python.exe -m pip install --upgrade pip
-    pip install pandas
-    pip install numpy
-    pip install wandb
-    pip install hydra-core
-    pip install torch --index-url https://download.pytorch.org/whl/cu121
-    pip install torchaudio --index-url https://download.pytorch.org/whl/cu121
-    pip install torchvision --index-url https://download.pytorch.org/whl/cu121
-    pip install matplotlib
-    pip install tqm
+    pip install -U pandas
+    pip install -U numpy
+    pip install -U wandb
+    pip install -U hydra-core
+    pip install -U torch --index-url https://download.pytorch.org/whl/cu121
+    pip install -U torchaudio --index-url https://download.pytorch.org/whl/cu121
+    pip install -U torchvision --index-url https://download.pytorch.org/whl/cu121
+    pip install -U torchinfo
+    pip install -U scikit-learn
+    pip install -U matplotlib
+    pip install -U tqdm
+
     ```
 
 ### Start Virtual Environment
