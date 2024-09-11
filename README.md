@@ -1,6 +1,6 @@
 # Template for Pytorch project
 
-This template is made for using the Pytorch framework with hydra for the configuration file and wandb for the logging information.
+This template is made for using the Pytorch framework with Hydra for the configuration file and WandB for logging information. The template is designed to work with the CSV file from the Iris dataset available on Kaggle: [Iris Dataset](https://www.kaggle.com/datasets/vikrishnan/iris-dataset).
 
 This template is based on the project: [TimeSerieClassifierOnMusic](https://github.com/yannsadowski/TimeSerieClassifierOnMusic).
 
@@ -97,6 +97,17 @@ Run the `main.py` script to train the model:
 ```sh
 python main.py
 ```
+
+### Wandb Sweep
+
+Use wandb sweep with `sweep_file\wandb_sweep.yaml` file to make the exploration of hyper-parameter of the model:
+
+```sh
+wandb sweep .\sweep_file\wandb_sweep.yaml
+```
+
+this command will give you the command line to launch a agent.
+It's possible to launch multiple agents at once.
 
 ### Predicting
 
