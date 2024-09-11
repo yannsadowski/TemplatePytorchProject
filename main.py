@@ -23,13 +23,18 @@ def main(dict_config: DictConfig):
         raise RuntimeError("This program requires a GPU to run.")
 
     # Prepare the DataLoaders
-    train_loader, val_loader, test_loader, output_size, input_size, genres = prepare_dataloaders(
+    train_loader, val_loader, test_loader, output_size, input_size = prepare_dataloaders(
         config=dataset_config
     )
     
     # Initialize the model with the configurations
     model = BaseModel(
- 
+         input_size=input_size,
+        output_size=output_size,
+        num_layers_dense=model_config.num_layers_dense,
+        hidden_size_multiplier=model_config.hidden_size_multiplier,
+        dropout=model_config.dropout,
+        norm_type=model_config.norm_type
     ).to(device)
     
     
@@ -51,7 +56,7 @@ def main(dict_config: DictConfig):
     train(model, train_loader, val_loader, test_loader, trainer_config,dataset_config)
     
     
-    summary_info = torchinfo.summary(model,input_size=(dataset_config.params.batch_size,input_size), device=device,verbose=0)
+    summary_info = torchinfo.summary(model,input_size=(input_size,), device=device,verbose=0)
 
 
     model_summary_str = str(summary_info)

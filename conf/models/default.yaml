@@ -1,0 +1,5 @@
+model_name: BaseModel            
+hidden_size_multiplier: 2  
+num_layers_dense: 2     
+dropout: 0.17568871225388794             
+norm_type: rmsnorm            

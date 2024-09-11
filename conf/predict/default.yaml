@@ -1,0 +1,5 @@
+input_size: 4
+output_size: 3
+class_mapping_path: model/class_mapping.yaml
+model_path: model/best_model.pth
+transformer_path: model/transformer.pkl

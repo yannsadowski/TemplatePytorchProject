@@ -1,0 +1,6 @@
+dist :
+  train: 0.80
+  val: 0.10
+  test: 0.10
+transform: sklearn.preprocessing.StandardScaler
+path: data/iris.data.csv
