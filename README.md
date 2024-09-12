@@ -1,6 +1,6 @@
 # Template for Pytorch project
 
-This template is made for using the Pytorch framework with Hydra for the configuration file and WandB for logging information. The template is designed to work with the CSV file from the Iris dataset available on Kaggle: [Iris Dataset](https://www.kaggle.com/datasets/vikrishnan/iris-dataset).
+This template is made for using the Pytorch framework with Hydra for the configuration file and WandB for logging information. The template is designed to work with the CSV file from the Airline Passenger dataset available on Kaggle: [Airline Passenger Dataset](https://www.kaggle.com/datasets/erogluegemen/airline-passengers).
 
 To make it work directly, you need to download the CSV file and place it in a directory named `data`. You should have the following structure:
 
@@ -12,7 +12,7 @@ Mode                 LastWriteTime         Length Name
 -a----         9/11/2024  11:39 AM           4551 iris.data.csv
 ```
 
-Ensure the file is named `iris.data.csv` or modify the script accordingly to match the name. 
+Ensure the file is named `airline-passanger.csv` or modify the script accordingly to match the name. 
 
 Additionally, configuration parameters (such as dataset path, training parameters, etc.) are managed using Hydra. You can modify these settings by editing the configuration files located in the `conf` directory.
 
