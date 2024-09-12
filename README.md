@@ -9,7 +9,7 @@ To make it work directly, you need to download the CSV file and place it in a di
 ```
 Mode                 LastWriteTime         Length Name
 ----                 -------------         ------ ----
--a----         9/11/2024  11:39 AM           4551 iris.data.csv
+-a----         9/12/2024  10:33 AM           2190 airline-passengers.csv
 ```
 
 Ensure the file is named `airline-passanger.csv` or modify the script accordingly to match the name. 
