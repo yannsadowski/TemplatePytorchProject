@@ -4,7 +4,7 @@ This template is made for using the Pytorch framework with Hydra for the configu
 
 To make it work directly, you need to download the CSV file and place it in a directory named `data`. You should have the following structure:
 
-**Directory:** `D:\code\TemplatePytorchProject\data`
+**Directory:** `D:\code\TemplatePytorchProject_LSTM\data`
 
 ```
 Mode                 LastWriteTime         Length Name
@@ -23,7 +23,7 @@ This template is based on the project: [TimeSerieClassifierOnMusic](https://gith
 The main directories and files in the project are structured as follows:
 
 ```
-TemplatePytorchProject
+TemplatePytorchProject_LSTM
 │
 ├── conf
 │   ├── data
