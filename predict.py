@@ -4,11 +4,10 @@ import hydra
 from omegaconf import DictConfig
 import torch
 import pandas as pd
-from src.models.BaseModel import BaseModel
-from src.data.data import transform_data
+from src.models.LSTMModel import LSTMModel
+from src.data.data import transform_data, create_sequences
 from src.predict.predict import predict
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
-import joblib 
+from sklearn.metrics import mean_squared_error, mean_absolute_error, r2_score
 from tqdm import tqdm
 
 @hydra.main(config_path="conf/", config_name="default", version_base="1.1")
@@ -27,9 +26,10 @@ def predict_main(dict_config: DictConfig):
         raise RuntimeError("This program requires a GPU to run.")
 
     # Initialize the model with the configurations
-    model = BaseModel(
-        input_size=predict_config.input_size,
-        output_size=predict_config.output_size,
+    model = LSTMModel(
+        input_size=predict_config["input_size"],
+        output_size=1,
+        num_layers_lstm=model_config.num_layers_lstm,
         num_layers_dense=model_config.num_layers_dense,
         hidden_size_multiplier=model_config.hidden_size_multiplier,
         dropout=model_config.dropout,
@@ -40,71 +40,49 @@ def predict_main(dict_config: DictConfig):
     model.load_state_dict(torch.load(get_path(predict_config.model_path)))
     model.to(device)  # Send model to GPU if available
     
-    # Load classes mapping
-    class_mapping = load_class_mapping(get_path(predict_config.class_mapping_path))
-    
     # Initialize the list for storing predictions 
     all_predictions = []
 
     # Load the Iris dataset from CSV file
     df = pd.read_csv(get_path(dataset_config['path']))
     
-    all_data = df.iloc[:, :-1].values  # All columns except the last one (features)
-    y = df.iloc[:, -1].values   # Last column (target labels)
+    # Using pandas' str accessor for splitting and selecting the month part
+    df['month'] = df['month'].str.split('-').str[1].astype(int) / 12
 
-    # Load the pre-trained transformer
-    loaded_transformer = joblib.load(get_path(predict_config.transformer_path))
-    
+    df['Target'] = (df['total_passengers'].pct_change().shift(-1)) * 100
+    df = df.dropna()
+    # 1. Extract features (X) and Target value (y)
+    X =  df.drop(columns=['Target'])  # All columns expect target
+    y = df['Target']
+
+    X = create_sequences(X, dataset_config['sequences_size'])
+    y = y[:len(y) - dataset_config['sequences_size'] + 1]
+
     # Iterate over each sample with a progress bar
-    for data_path in tqdm(all_data, desc="Processing data", unit="sample"):
+    for sequence in tqdm(X, desc="Processing data", unit="sample"):
     
         # Transform data using the pre-trained transformer
-        data = transform_data(data_path, loaded_transformer)
+        data = transform_data(sequence, dataset_config['transform'])
         
         # Perform the prediction using the model
         prediction = predict(model, data)
         
-        # Get the predicted class using torch.argmax
-        final_prediction = torch.argmax(torch.tensor(prediction, device=device), dim=-1)
-        
-        # Ensure final_prediction is a 1D tensor before adding it
-        final_prediction = final_prediction.unsqueeze(0)  # Add dimension if necessary
-        
         # Store the prediction
-        all_predictions.append(final_prediction)
+        all_predictions.append(prediction)
     
-    # Concatenate predictions and convert to numpy array
-    if all_predictions:  # Check if the list is not empty
-        all_predictions = torch.cat(all_predictions).cpu().numpy()
-    else:
-        print("No predictions were made.")
-        return
-    
-    # Use class_mapping to get actual class labels
-    y_true = [label for label in y]
-    y_pred = [class_mapping[int(pred)] for pred in all_predictions]
+   
 
-    # Calculate accuracy
-    accuracy = accuracy_score(y_true, y_pred)
-    
-    # Generate classification report
-    report = classification_report(y_true, y_pred, target_names=class_mapping.values())
-    
-    # Generate confusion matrix
-    conf_matrix = confusion_matrix(y_true, y_pred)
+    # Calculate regression metrics
+    mse = mean_squared_error(y, all_predictions)
+    mae = mean_absolute_error(y, all_predictions)
+    r2 = r2_score(y, all_predictions)
 
-    # Print results
-    print("Accuracy: ", accuracy)
-    print("Classification Report: \n", report)
-    print("Confusion Matrix: \n", conf_matrix)
+    # Print the results
+    print("Mean Squared Error (MSE): ", mse)
+    print("Mean Absolute Error (MAE): ", mae)
+    print("R² Score: ", r2)
 
 
-# Function to load class mapping from a YAML file
-def load_class_mapping(file_path):
-    with open(file_path, 'r') as file:
-        # Load the YAML file into a dictionary
-        class_mapping = yaml.safe_load(file)
-    return class_mapping['classes']
 
 # Function to get the correct file path
 def get_path(path):

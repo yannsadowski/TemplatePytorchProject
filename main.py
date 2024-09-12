@@ -4,7 +4,7 @@ import wandb
 import torch
 import torchinfo 
 from src.data.data import prepare_dataloaders
-from src.models.BaseModel import BaseModel
+from src.models.LSTMModel import LSTMModel
 from src.trainer.train import train
 
 @hydra.main(config_path="conf/", config_name="default", version_base="1.1")
@@ -23,14 +23,15 @@ def main(dict_config: DictConfig):
         raise RuntimeError("This program requires a GPU to run.")
 
     # Prepare the DataLoaders
-    train_loader, val_loader, test_loader, output_size, input_size = prepare_dataloaders(
+    train_loader, val_loader, test_loader, input_size = prepare_dataloaders(
         config=dataset_config
     )
     
     # Initialize the model with the configurations
-    model = BaseModel(
-         input_size=input_size,
-        output_size=output_size,
+    model = LSTMModel(
+        input_size=input_size,
+        output_size=1,
+        num_layers_lstm=model_config.num_layers_lstm,
         num_layers_dense=model_config.num_layers_dense,
         hidden_size_multiplier=model_config.hidden_size_multiplier,
         dropout=model_config.dropout,
@@ -56,7 +57,10 @@ def main(dict_config: DictConfig):
     train(model, train_loader, val_loader, test_loader, trainer_config,dataset_config)
     
     
-    summary_info = torchinfo.summary(model,input_size=(input_size,), device=device,verbose=0)
+    sequence_length = dataset_config['sequences_size']
+    num_features = input_size
+
+    summary_info = torchinfo.summary(model, input_size=(1, sequence_length, num_features), device=device, verbose=0)
 
 
     model_summary_str = str(summary_info)

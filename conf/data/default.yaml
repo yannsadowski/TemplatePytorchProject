@@ -2,5 +2,6 @@ dist :
   train: 0.80
   val: 0.10
   test: 0.10
-transform: sklearn.preprocessing.StandardScaler
-path: data/iris.data.csv
+transform: sklearn.preprocessing.MinMaxScaler
+path: data/airline-passengers.csv
+sequences_size: 12

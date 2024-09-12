@@ -4,11 +4,8 @@ import random
 import pandas as pd
 from typing import Any
 import importlib
-from sklearn.preprocessing import LabelEncoder
-import yaml
 import torch
 from torch.utils.data import Dataset, DataLoader
-import joblib  
 
 
 def get_transformer(class_path: str) -> Any:
@@ -34,7 +31,7 @@ class Dataset(Dataset):
     """
     def __init__(self, data, labels):
         self.data = data
-        self.labels = labels
+        self.labels = labels.reset_index(drop=True)
     
     def __len__(self):
         return len(self.data)
@@ -42,13 +39,20 @@ class Dataset(Dataset):
     def __getitem__(self, idx):
         x = self.data[idx]
         y = self.labels[idx]
-        return torch.tensor(x, dtype=torch.float32), torch.tensor(y, dtype=torch.long)
+        return torch.tensor(x, dtype=torch.float32), torch.tensor(y, dtype=torch.float32)
 
+
+# Function to create sequences for LSTM
+def create_sequences(data, sequence_size):
+    sequences = []
+    for i in range(len(data) - sequence_size + 1):
+        sequences.append(data[i:i + sequence_size])
+    return np.array(sequences)
 
 # Main function to transform data and create DataLoaders
 def prepare_dataloaders(config):
     """
-    Prepare the dataset by loading it from a file, transforming features, encoding labels, 
+    Prepare the dataset by loading it from a file, transforming features, calculating the target, 
     and splitting it into training, validation, and test sets. Also creates DataLoaders for PyTorch.
     
     Args:
@@ -56,7 +60,6 @@ def prepare_dataloaders(config):
     
     Returns:
         train_loader, val_loader, test_loader: PyTorch DataLoaders for training, validation, and test sets.
-        num_classes (int): The number of unique classes in the dataset.
         input_size (int): The size of the input features.
     """
     # Get the current directory where this script is located
@@ -70,27 +73,44 @@ def prepare_dataloaders(config):
 
     # Load the Iris dataset from CSV file
     df = pd.read_csv(full_path)
+    
+    # Using pandas' str accessor for splitting and selecting the month part
+    df['month'] = df['month'].str.split('-').str[1].astype(int) / 12
 
-    # 1. Extract features (X) and labels (y)
-    X = df.iloc[:, :-1].values  # All columns except the last one (features)
-    y = df.iloc[:, -1].values   # Last column (target labels)
+    # Calculate the percentage change in total passengers and shift the values to align with future targets, then remove any NaN values
+    df['Target'] = (df['total_passengers'].pct_change().shift(-1)) * 100
+    df = df.dropna()
 
+    # 1. Extract features (X) and Target value (y)
+    X =  df.drop(columns=['Target'])  # All columns expect target
+    y = df['Target']
+
+    X = create_sequences(X, config['sequences_size'])
+    y = y[:len(y) - config['sequences_size'] + 1]
+
+    
     # 2. Apply the transformation defined in config['transform'] (e.g., a scaler)
     if 'transform' in config and config['transform']:
+        # Get the transformer class (e.g., StandardScaler)
         transformer_class = get_transformer(config['transform'])
         transformer = transformer_class()
-        X = transformer.fit_transform(X)
         
-        # Save the transformer with joblib
-        joblib.dump(transformer, 'transformer.pkl')
+        # Extract the second feature (index 1) across all sequences
+        second_feature = X[:, :, 1]  # Shape: (num_sequences, sequence_size)
+        
+        # Apply transformation to the second feature
+        second_feature_transformed = transformer.fit_transform(second_feature)
+        
+        # Reassign the transformed second feature back into X
+        X[:, :, 1] = second_feature_transformed
 
-    # 3. Encode the labels
-    label_encoder = LabelEncoder()
-    y_encoded = label_encoder.fit_transform(y)
 
     # 4. Split the data into training, validation, and test sets
     train_size = config['dist']['train']
     val_size = config['dist']['val']
+    
+    print("len(X): ",len(X))
+    print("len(y): ",len(y))
     
     # Determine the number of samples in each set
     total_size = len(X)
@@ -99,11 +119,15 @@ def prepare_dataloaders(config):
 
     # Split the data
     train_data, val_data, test_data = X[:train_end], X[train_end:val_end], X[val_end:]
-    train_labels, val_labels, test_labels = y_encoded[:train_end], y_encoded[train_end:val_end], y_encoded[val_end:]
+    train_labels, val_labels, test_labels = y[:train_end], y[train_end:val_end], y[val_end:]
 
     print(f"Train data shape: {train_data.shape}")
     print(f"Validation data shape: {val_data.shape}")
     print(f"Test data shape: {test_data.shape}")
+    
+    print(f"Train target shape: {train_labels.shape}")
+    print(f"Validation target shape: {val_labels.shape}")
+    print(f"Test target shape: {test_labels.shape}")
 
     # 5. Create PyTorch datasets
     train_dataset = Dataset(train_data, train_labels)
@@ -115,27 +139,32 @@ def prepare_dataloaders(config):
     val_loader = DataLoader(val_dataset, shuffle=False)
     test_loader = DataLoader(test_dataset, shuffle=False)
 
-    # 7. Create and save the class mapping file
-    class_mapping = {i: str(class_name) for i, class_name in enumerate(label_encoder.classes_)}
-    mapping_file_path = 'class_mapping.yaml'
-    with open(mapping_file_path, 'w') as f:
-        yaml.dump({'classes': class_mapping}, f, default_flow_style=False)
-
-    return train_loader, val_loader, test_loader, len(label_encoder.classes_), train_data.shape[1]
+    return train_loader, val_loader, test_loader, train_data.shape[-1]
 
 
-def transform_data(data, transformer):
+def transform_data(data, transformer_name):
     """
-    Apply transformation to the input data using a pre-trained transformer.
+    Apply transformation to the input data using a transformer.
     
     Args:
         data (array-like): The input data to be transformed.
-        transformer (object): The pre-trained transformer object.
+        transformer_name (object): Name of the transformer to import it.
     
     Returns:
-        transformed_data (array-like): The transformed data.
+        data (array-like): The transformed data.
     """
-    # Fit the transformer on the entire dataset if needed; here we fit on the row for this example
-    transformed_data = transformer.transform(data.reshape(1, -1))  # Transform the row
+    # Extract the second feature (index 1) across all sequences
+    second_feature = data[:, 1]  # Shape: (sequence_size,num_features)
     
-    return transformed_data.flatten()  # Flatten to return the transformed row in original shape
+    # Get transformer
+    transformer_class = get_transformer(transformer_name)
+    transformer = transformer_class()
+   
+    # Apply transformation to the second feature
+    second_feature_transformed = transformer.fit_transform(second_feature.reshape(-1, 1))
+    
+    # Reassign the transformed second feature back into X
+    data[:, 1] = second_feature_transformed.flatten() 
+    
+    
+    return data 

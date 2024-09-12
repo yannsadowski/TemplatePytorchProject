@@ -9,6 +9,4 @@ def predict(model,data):
     with torch.no_grad():
         data = torch.tensor(data, dtype=torch.float32).unsqueeze(0).to(device)
         output = model(data)
-        probabilities = F.softmax(output, dim=1)
-        probabilities_list = probabilities.squeeze().tolist()
-    return probabilities_list
+    return output.item()

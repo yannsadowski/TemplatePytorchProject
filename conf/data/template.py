@@ -7,6 +7,7 @@ class DatasetConfig:
     val: float
     test: float
     transform: Any = field(default=None)
+    sequences_size: int
 
 
 
