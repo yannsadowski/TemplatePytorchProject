@@ -2,26 +2,29 @@ program: main.py
 metric:
   name: test_loss
   goal: minimize
-name: random_sweep
+name: cnn_sweep
 method: random
 parameters:
-  models.dropout:
-    min: 0.1
-    max: 0.3  
-  models.norm_type:
-    values: [rmsnorm, layernorm]
+  models.num_conv_layers:
+    min: 2
+    max: 5
+  models.kernel_size:
+    values: [3, 5, 7]  # Testing different kernel sizes
   models.hidden_size_multiplier:
-    min: 1  
-    max: 3 
-  models.num_layers_dense:
     min: 1
     max: 3
-  data.transform:
-    values: [sklearn.preprocessing.StandardScaler, sklearn.preprocessing.MinMaxScaler]
+  models.num_dense_layers:
+    min: 1
+    max: 3
+  models.dropout:
+    min: 0.1
+    max: 0.3
+  data.data_augment:
+    values: [True, False]
   trainer.learning_rate:
-    distribution: log_uniform_values  
+    distribution: log_uniform_values
     min: !!float 1e-5
-    max: !!float 0.01  
+    max: !!float 0.01
 
 command:
 - ${env}
