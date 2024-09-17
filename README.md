@@ -70,6 +70,12 @@ TemplatePytorchProject_CNN
     ```sh
     ./dev_env/Scripts/Activate
     ```
+    
+    or 
+
+    ```sh
+    source dev_env/bin/active
+    ```
 
 3. Upgrade `pip` and install necessary packages:
 
