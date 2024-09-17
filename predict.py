@@ -4,7 +4,7 @@ import hydra
 from omegaconf import DictConfig
 import torch
 import pandas as pd
-from src.models.BaseModel import BaseModel
+from models.CNNModel import CNNModel
 from src.data.data import transform_data
 from src.predict.predict import predict
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix

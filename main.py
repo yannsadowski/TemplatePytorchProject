@@ -4,7 +4,7 @@ import wandb
 import torch
 import torchinfo 
 from src.data.data import prepare_dataloaders
-from src.models.BaseModel import BaseModel
+from src.models.CNNModel import CNNModel
 from src.trainer.train import train
 
 @hydra.main(config_path="conf/", config_name="default", version_base="1.1")
@@ -23,20 +23,21 @@ def main(dict_config: DictConfig):
         raise RuntimeError("This program requires a GPU to run.")
 
     # Prepare the DataLoaders
-    train_loader, val_loader, test_loader, output_size, input_size = prepare_dataloaders(
+    train_loader, val_loader, test_loader = prepare_dataloaders(
         config=dataset_config
     )
     
     # Initialize the model with the configurations
-    model = BaseModel(
-         input_size=input_size,
-        output_size=output_size,
-        num_layers_dense=model_config.num_layers_dense,
-        hidden_size_multiplier=model_config.hidden_size_multiplier,
-        dropout=model_config.dropout,
-        norm_type=model_config.norm_type
+    model = CNNModel(
+        input_channels=model_config.input_channels,  
+        num_classes=model_config.num_classes,  
+        num_conv_layers=model_config.num_conv_layers,  
+        num_dense_layers=model_config.num_dense_layers, 
+        hidden_size_multiplier=model_config.hidden_size_multiplier,  
+        dropout=model_config.dropout, 
+        kernel_size=model_config.kernel_size
     ).to(device)
-    
+
     
     
     # Connect to Weights and Biases
@@ -55,8 +56,15 @@ def main(dict_config: DictConfig):
     # Start the training process
     train(model, train_loader, val_loader, test_loader, trainer_config,dataset_config)
     
-    
-    summary_info = torchinfo.summary(model,input_size=(input_size,), device=device,verbose=0)
+    # Assuming batch_size, number of channels, and image dimensions are available
+    batch_size = dataset_config['batch_size']
+    input_channels = model_config.input_channels
+    image_height = 32  # For CIFAR-10, the image height is 32 pixels
+    image_width = 32   # For CIFAR-10, the image width is also 32 pixels
+
+    # Now include the batch size and the full input dimensions in the input_size argument
+    summary_info = torchinfo.summary(model, input_size=(batch_size, input_channels, image_height, image_width), device=device, verbose=0)
+
 
 
     model_summary_str = str(summary_info)

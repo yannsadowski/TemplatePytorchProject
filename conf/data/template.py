@@ -6,7 +6,7 @@ class DatasetConfig:
     train: float
     val: float
     test: float
-    transform: Any = field(default=None)
+    data_augment: bool
 
 
 

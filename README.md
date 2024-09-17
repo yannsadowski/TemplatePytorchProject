@@ -1,18 +1,21 @@
 # Template for Pytorch project
 
-This template is made for using the Pytorch framework with Hydra for the configuration file and WandB for logging information. The template is designed to work with the CSV file from the Iris dataset available on Kaggle: [Iris Dataset](https://www.kaggle.com/datasets/vikrishnan/iris-dataset).
+This template is made for using the Pytorch framework with Hydra for the configuration file and WandB for logging information. The template is designed to work with the CIFAR-10 dataset available on Kaggle: [CIFAR-10 Dataset](https://www.kaggle.com/c/cifar-10/data).
 
-To make it work directly, you need to download the CSV file and place it in a directory named `data`. You should have the following structure:
+To make it work directly, you need to download the dataset files and place them in a directory named `data`. You should have the following structure:
 
-**Directory:** `D:\code\TemplatePytorchProject\data`
+**Directory:** `D:\code\TemplatePytorchProject_CNN\data`
 
 ```
 Mode                 LastWriteTime         Length Name
 ----                 -------------         ------ ----
--a----         9/11/2024  11:39 AM           4551 iris.data.csv
+d-----         9/17/2024   9:57 AM                train
+-a----         9/17/2024   9:51 AM         588903 trainLabels.csv
 ```
 
-Ensure the file is named `iris.data.csv` or modify the script accordingly to match the name. 
+Inside the `train` directory, you'll find the 50,000 images used for training.
+
+Ensure the directory structure matches the format above, or modify the script accordingly to point to the correct file paths.
 
 Additionally, configuration parameters (such as dataset path, training parameters, etc.) are managed using Hydra. You can modify these settings by editing the configuration files located in the `conf` directory.
 
@@ -23,7 +26,7 @@ This template is based on the project: [TimeSerieClassifierOnMusic](https://gith
 The main directories and files in the project are structured as follows:
 
 ```
-TemplatePytorchProject
+TemplatePytorchProject_CNN
 │
 ├── conf
 │   ├── data

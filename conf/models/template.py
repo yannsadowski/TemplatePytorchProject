@@ -6,5 +6,9 @@ class ModelConfig:
     hidden_size_multiplier: int
     num_layers_dense: int
     dropout: float
-    norm_type: str
+    input_channels: int
+    num_classes: int
+    num_conv_layers: int
+    kernel_size: int
+    
 
