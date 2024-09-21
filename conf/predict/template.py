@@ -8,3 +8,4 @@ class PredictConfig:
     class_mapping_path: str
     model_path: str
     transformer_path: str
+    data_path: str

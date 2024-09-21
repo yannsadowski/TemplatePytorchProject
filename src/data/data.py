@@ -71,16 +71,21 @@ def prepare_dataloaders(config):
             transforms.RandomRotation(degrees=10),   # Random rotation within 10 degrees
             transforms.RandomResizedCrop(size=(32, 32), scale=(0.8, 1.0)),  # Resize and crop
             transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),  # Random color jitter
-            transforms.ToTensor()  # Convert to tensor (this will handle converting PIL image to tensor)
+            transforms.ToTensor(),  # Convert to tensor (this will handle converting PIL image to tensor)
+            transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])  # Normalize (values between -1 and 1)
         ])
     else:
         train_transformations = transforms.Compose([
-            transforms.ToTensor()  # Only convert to tensor if no augmentation is applied
+            transforms.Resize((32, 32)),  # Resize to the expected size for your model
+            transforms.ToTensor(),        # Convert the image to a PyTorch tensor
+            transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])  # Normalize (values between -1 and 1)
         ])
     
     # Apply same transformations for validation and test (no augmentation)
     val_test_transformations = transforms.Compose([
-        transforms.ToTensor()  # Convert to tensor
+        transforms.Resize((32, 32)),  # Resize to the expected size for your model
+        transforms.ToTensor(),        # Convert the image to a PyTorch tensor
+        transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])  # Normalize (values between -1 and 1)
     ])
     
     # 5. Create PyTorch datasets (with transformations)
@@ -128,18 +133,31 @@ def prepare_dataloaders(config):
 
 
 
-def transform_data(data, transformer):
+def transform_data(img_path):
     """
-    Apply transformation to the input data using a pre-trained transformer.
+    Apply transformation to the input image, ready for production use.
     
     Args:
-        data (array-like): The input data to be transformed.
-        transformer (object): The pre-trained transformer object.
+        img_path (str): The path to the image file to be transformed.
     
     Returns:
-        transformed_data (array-like): The transformed data.
+        transformed_image (Tensor): The transformed image as a PyTorch tensor.
     """
-    # Fit the transformer on the entire dataset if needed; here we fit on the row for this example
-    transformed_data = transformer.transform(data.reshape(1, -1))  # Transform the row
     
-    return transformed_data.flatten()  # Flatten to return the transformed row in original shape
+    # Load the image using PIL
+    try:
+        image = Image.open(img_path)
+    except Exception as e:
+        raise ValueError(f"Error loading image from {img_path}: {e}")
+    
+    # Define the transformations (resize, convert to tensor, normalize)
+    transformation = transforms.Compose([
+        transforms.Resize((32, 32)),  # Resize to the expected size for your model
+        transforms.ToTensor(),        # Convert the image to a PyTorch tensor
+        transforms.Normalize(mean=[0.5, 0.5, 0.5], std=[0.5, 0.5, 0.5])  # Normalize (values between -1 and 1)
+    ])
+    
+    # Apply the transformations
+    transformed_image = transformation(image)
+
+    return transformed_image

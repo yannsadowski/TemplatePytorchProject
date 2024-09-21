@@ -4,7 +4,7 @@ import hydra
 from omegaconf import DictConfig
 import torch
 import pandas as pd
-from models.CNNModel import CNNModel
+from src.models.CNNModel import CNNModel
 from src.data.data import transform_data
 from src.predict.predict import predict
 from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
@@ -27,13 +27,14 @@ def predict_main(dict_config: DictConfig):
         raise RuntimeError("This program requires a GPU to run.")
 
     # Initialize the model with the configurations
-    model = BaseModel(
-        input_size=predict_config.input_size,
-        output_size=predict_config.output_size,
-        num_layers_dense=model_config.num_layers_dense,
-        hidden_size_multiplier=model_config.hidden_size_multiplier,
-        dropout=model_config.dropout,
-        norm_type=model_config.norm_type
+    model = CNNModel(
+        input_channels=model_config.input_channels,  
+        num_classes=model_config.num_classes,  
+        num_conv_layers=model_config.num_conv_layers,  
+        num_dense_layers=model_config.num_dense_layers, 
+        hidden_size_multiplier=model_config.hidden_size_multiplier,  
+        dropout=model_config.dropout, 
+        kernel_size=model_config.kernel_size
     )
     
     # Load the model
@@ -46,20 +47,21 @@ def predict_main(dict_config: DictConfig):
     # Initialize the list for storing predictions 
     all_predictions = []
 
-    # Load the Iris dataset from CSV file
-    df = pd.read_csv(get_path(dataset_config['path']))
-    
-    all_data = df.iloc[:, :-1].values  # All columns except the last one (features)
-    y = df.iloc[:, -1].values   # Last column (target labels)
+    # List to store all image paths
+    pictures_path = []
 
-    # Load the pre-trained transformer
-    loaded_transformer = joblib.load(get_path(predict_config.transformer_path))
+    # Iterate through the directory to get the paths of each image
+    for root, dirs, files in os.walk(get_path(predict_config['data_path'])):
+        for file in files:
+            pictures_path.append(os.path.join(root, file))
+    
+
     
     # Iterate over each sample with a progress bar
-    for data_path in tqdm(all_data, desc="Processing data", unit="sample"):
+    for picture in tqdm(pictures_path, desc="Processing Picture", unit="Picture"):
     
         # Transform data using the pre-trained transformer
-        data = transform_data(data_path, loaded_transformer)
+        data = transform_data(picture)
         
         # Perform the prediction using the model
         prediction = predict(model, data)
@@ -81,22 +83,9 @@ def predict_main(dict_config: DictConfig):
         return
     
     # Use class_mapping to get actual class labels
-    y_true = [label for label in y]
     y_pred = [class_mapping[int(pred)] for pred in all_predictions]
 
-    # Calculate accuracy
-    accuracy = accuracy_score(y_true, y_pred)
-    
-    # Generate classification report
-    report = classification_report(y_true, y_pred, target_names=class_mapping.values())
-    
-    # Generate confusion matrix
-    conf_matrix = confusion_matrix(y_true, y_pred)
 
-    # Print results
-    print("Accuracy: ", accuracy)
-    print("Classification Report: \n", report)
-    print("Confusion Matrix: \n", conf_matrix)
 
 
 # Function to load class mapping from a YAML file
