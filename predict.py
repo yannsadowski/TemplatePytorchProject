@@ -7,8 +7,7 @@ import pandas as pd
 from src.models.CNNModel import CNNModel
 from src.data.data import transform_data
 from src.predict.predict import predict
-from sklearn.metrics import accuracy_score, classification_report, confusion_matrix
-import joblib 
+import re
 from tqdm import tqdm
 
 @hydra.main(config_path="conf/", config_name="default", version_base="1.1")
@@ -50,12 +49,18 @@ def predict_main(dict_config: DictConfig):
     # List to store all image paths
     pictures_path = []
 
-    # Iterate through the directory to get the paths of each image
+    # Function to extract the numerical part of the filename
+    def extract_number(file_name):
+        return int(re.search(r'\d+', file_name).group())
+
+    # Iterate through the directory to get the paths of each image, sorted numerically
     for root, dirs, files in os.walk(get_path(predict_config['data_path'])):
+        # Sort files numerically based on the numbers in their filenames
+        files.sort(key=extract_number)
         for file in files:
             pictures_path.append(os.path.join(root, file))
     
-
+    print(pictures_path[0:5])
     
     # Iterate over each sample with a progress bar
     for picture in tqdm(pictures_path, desc="Processing Picture", unit="Picture"):
@@ -84,7 +89,20 @@ def predict_main(dict_config: DictConfig):
     
     # Use class_mapping to get actual class labels
     y_pred = [class_mapping[int(pred)] for pred in all_predictions]
+    
+    submission_df = pd.DataFrame({
+        'label': y_pred
+    })
 
+    # Add an 'id' column that corresponds to the index, starting at 1
+    submission_df['id'] = submission_df.index + 1
+
+    # Rearrange the columns to have 'id' as the first column
+    submission_df = submission_df[['id', 'label']]
+
+    # Save the DataFrame to a CSV file
+    output_path = 'predictions_submission.csv'
+    submission_df.to_csv(output_path, index=False)
 
 
 
