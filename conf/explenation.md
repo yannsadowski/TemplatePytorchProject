@@ -1,13 +1,13 @@
-# CNN Classifier Configuration Guide
+# Project Configuration Guide
 
-This guide provides an overview of the configuration setup for the CNN project. The configuration is organized using YAML files and Python scripts to streamline data processing, model training, prediction, and experiment tracking.
+This guide provides an overview of the configuration setup for the Pytorch project. The configuration is organized using YAML files and Python scripts to streamline data processing, model training, prediction, and experiment tracking.
 
 ## Directory Structure
 
 The main configuration files and directories are structured as follows:
 
 ```
-D:\code\TemplatePytorchProject_CNN\conf
+D:\code\TemplatePytorchProject\conf
 │
 ├── data
 │   ├── __pycache__
@@ -94,4 +94,4 @@ project_name:
 
 ## Summary
 
-This setup allows you to manage and customize the configuration for different components of the CNN project efficiently. By organizing the configuration settings in a structured way, you can easily modify parameters, paths, and other settings to fit your specific needs.
+This setup allows you to manage and customize the configuration for different components of the Pytorch project efficiently. By organizing the configuration settings in a structured way, you can easily modify parameters, paths, and other settings to fit your specific needs.
