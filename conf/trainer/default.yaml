@@ -1,2 +1,4 @@
-learning_rate: 0.005435888836112643   
-epochs: 50
+learning_rate: 0.000904998538406249  
+epochs: 200
+early_stopping: True
+early_stopping_patience: 10

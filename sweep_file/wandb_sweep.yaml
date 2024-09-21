@@ -2,7 +2,7 @@ program: main.py
 metric:
   name: test_loss
   goal: minimize
-name: cnn_sweep
+name: cnn_sweep_testSpeed
 method: random
 parameters:
   models.num_conv_layers:
@@ -28,6 +28,6 @@ parameters:
 
 command:
 - ${env}
-- .\dev_env\Scripts\python.exe
+- ${interpreter}
 - ${program}
 - ${args_no_hyphens}

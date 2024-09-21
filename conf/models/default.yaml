@@ -4,6 +4,6 @@ num_classes: 10
 num_conv_layers: 3  
 hidden_size_multiplier: 2  
 num_dense_layers: 2 
-dropout: 0.17568871225388794 
-kernel_size: 3  
+dropout: 0.28291132331604973
+kernel_size: 7  
 
