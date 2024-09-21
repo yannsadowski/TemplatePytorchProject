@@ -67,8 +67,8 @@ def prepare_dataloaders(config):
     # 4. Create transformations for data augmentation (if enabled)
     if config.get('data_augment', False):
         train_transformations = transforms.Compose([
-            transforms.RandomHorizontalFlip(p=0.33),  # Flip the image with 50% probability
-            transforms.RandomRotation(degrees=10),   # Random rotation within 15 degrees
+            transforms.RandomHorizontalFlip(p=0.33),  # Flip the image with 33% probability
+            transforms.RandomRotation(degrees=10),   # Random rotation within 10 degrees
             transforms.RandomResizedCrop(size=(32, 32), scale=(0.8, 1.0)),  # Resize and crop
             transforms.ColorJitter(brightness=0.2, contrast=0.2, saturation=0.2, hue=0.1),  # Random color jitter
             transforms.ToTensor()  # Convert to tensor (this will handle converting PIL image to tensor)
