@@ -63,18 +63,21 @@ def validate(model, val_loader, criterion, device):
 
     return epoch_loss, epoch_accuracy, epoch_precision, epoch_recall, epoch_f1
 
-def train(model, train_loader, val_loader, test_loader, config,dataset_config):
+def train(model, train_loader, val_loader, test_loader, config, dataset_config):
     device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
     model.to(device)
 
     criterion = nn.CrossEntropyLoss()
-    # TODO: It will be better to make the choce of optimizer with configuration file to try different thing during sweep
     optimizer = optim.AdamW(model.parameters(), lr=config.learning_rate)
 
     # Initialize the learning rate scheduler
-    scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=10, verbose=True)
+    scheduler = optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=config.epochs)
 
     best_val_loss = float('inf')
+    
+    # Initialize early stopping variables
+    early_stopping_patience = config.early_stopping_patience if config.early_stopping else None
+    early_stopping_counter = 0
 
     for epoch in range(config.epochs):
         start_time = time.time()
@@ -105,13 +108,22 @@ def train(model, train_loader, val_loader, test_loader, config,dataset_config):
             "epoch_time": epoch_time
         })
 
-        # Step the scheduler based on the validation loss
-        scheduler.step(val_loss)
+        # Step the scheduler based on epoch
+        scheduler.step()
 
         if val_loss < best_val_loss:
             best_val_loss = val_loss
             torch.save(model.state_dict(), "best_model.pth")
             print("Model saved!")
+            # Reset the early stopping counter if there is an improvement
+            early_stopping_counter = 0
+        else:
+            early_stopping_counter += 1
+
+        # Check for early stopping
+        if config.early_stopping and early_stopping_counter >= early_stopping_patience:
+            print(f"Early stopping triggered after {epoch+1} epochs.")
+            break
 
     print("Training complete. Testing model...")
 
@@ -122,7 +134,6 @@ def train(model, train_loader, val_loader, test_loader, config,dataset_config):
     print(f"Test Recall: {test_recall:.4f}")
     print(f"Test F1 Score: {test_f1:.4f}")
     
-
     wandb.log({
         "test_loss": test_loss,
         "test_accuracy": test_accuracy,
@@ -130,4 +141,3 @@ def train(model, train_loader, val_loader, test_loader, config,dataset_config):
         "test_recall": test_recall,
         "test_f1": test_f1
     })
-    
