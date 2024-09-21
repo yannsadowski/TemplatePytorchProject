@@ -1,12 +1,8 @@
-import numpy as np
 import os
-import random
 import pandas as pd
-from typing import Any
 from sklearn.preprocessing import LabelEncoder
 import torchvision.transforms as transforms
 import yaml
-import torch
 from torch.utils.data import Dataset, DataLoader
 from PIL import Image
 
@@ -127,8 +123,6 @@ def prepare_dataloaders(config):
         yaml.dump({'classes': class_mapping}, f, default_flow_style=False)
 
     return train_loader, val_loader, test_loader
-
-
 
 
 

@@ -14,7 +14,6 @@ from tqdm import tqdm
 def predict_main(dict_config: DictConfig):
     
     # Retrieve specific configurations
-    dataset_config = dict_config.data
     model_config = dict_config.models
     predict_config = dict_config.predict
     

@@ -37,8 +37,6 @@ def main(dict_config: DictConfig):
         dropout=model_config.dropout, 
         kernel_size=model_config.kernel_size
     ).to(device)
-
-    
     
     # Connect to Weights and Biases
     wandb.login(key=wandb_config.api_key)
@@ -64,8 +62,6 @@ def main(dict_config: DictConfig):
 
     # Now include the batch size and the full input dimensions in the input_size argument
     summary_info = torchinfo.summary(model, input_size=(batch_size, input_channels, image_height, image_width), device=device, verbose=0)
-
-
 
     model_summary_str = str(summary_info)
 
